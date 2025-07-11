@@ -1,0 +1,142 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #1b052b;
+  color: #e0e0f0;
+  position: relative;
+  overflow-x: hidden;
+  letter-spacing: 0.03em;
+}
+
+.spotlight {
+  position: fixed;
+  width: 1100px;
+  height: 1100px;
+  background: radial-gradient(circle, rgb(40, 2, 70) 0%, transparent 60%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
+header {
+  position: relative;
+  z-index: 10;
+  padding: 2rem;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  justify-content: left;
+  padding: 0;
+}
+
+.nav-menu.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 3rem;
+}
+
+.nav-menu a {
+  color: #cba3ffa0;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem 0.5rem 4rem;
+  position: relative;
+  display: inline-block;
+  transition: all 0.15s ease;
+}
+
+.nav-menu a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleX(1);
+  transform-origin: left;
+  height: 1px;
+  width: 40px;
+  background-color: #d877ff6b;
+  transition: transform 0.15s ease, width 0.15s ease;
+}
+
+/* Hover and Active underline animation */
+.nav-menu a:hover::before,
+.nav-menu a.active::before {
+  transform: translateY(-50%) scaleX(1);
+  height: 1px;
+  width: 80px;
+  background-color: #d469fe;
+}
+
+/* Hover and Active text style */
+.nav-menu a:hover,
+.nav-menu a.active {
+  color: #ecdfff;
+  font-weight: bold;
+  padding-left: 6rem;
+}
+
+#hero {
+  text-align: left;
+  margin-top: 0.8vh;
+  margin-left: 35vh;
+  z-index: 5;
+  position: relative;
+}
+
+#hero h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+#hero h2 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #e0e0f0bd;
+}
+
+#hero p {
+  font-size: 1rem;
+  color: #e0e0f0a3;
+}
+
+section {
+  min-height: 100vh;
+  padding: 4rem;
+  scroll-margin-top: 80px; /* avoids being hidden behind fixed column */
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.fixed-column {
+  z-index: 0;
+  flex: 0 0 35%;
+  padding: 3rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 4rem;
+  background-color: transparent;
+}
+
+.scrolling-content {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  padding: 4rem;
+}
