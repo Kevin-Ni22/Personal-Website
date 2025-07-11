@@ -39,7 +39,7 @@ header {
 .nav-menu.vertical {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.1rem;
   margin-top: 3rem;
 }
 
@@ -63,7 +63,7 @@ header {
   transform-origin: left;
   height: 1px;
   width: 40px;
-  background-color: #d877ff6b;
+  background-color: #9dfc676b;
   transition: transform 0.15s ease, width 0.15s ease;
 }
 
@@ -73,7 +73,7 @@ header {
   transform: translateY(-50%) scaleX(1);
   height: 1px;
   width: 80px;
-  background-color: #d469fe;
+  background-color: #9efc67f1;
 }
 
 /* Hover and Active text style */
