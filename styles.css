@@ -1,22 +1,25 @@
 html {
+  font-family:var(--font-inter),ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  font-feature-settings:"ss03","cv02","cv11";
+  font-variation-settings:normal;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background-color: #1b052b;
-  color: #e0e0f0;
+  background-color: #0a1828;
+  color: #bfa181;
   position: relative;
   overflow-x: hidden;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.035em;
 }
 
 .spotlight {
   position: fixed;
   width: 1100px;
   height: 1100px;
-  background: radial-gradient(circle, rgb(40, 2, 70) 0%, transparent 60%);
+  background: radial-gradient(circle, #0f243b 0%, transparent 60%);
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: -1;
@@ -25,7 +28,7 @@ body {
 header {
   position: relative;
   z-index: 10;
-  padding: 2rem;
+  padding: clamp(1rem, 5vw, 3rem);
 }
 
 .nav-menu {
@@ -44,7 +47,7 @@ header {
 }
 
 .nav-menu a {
-  color: #cba3ffa0;
+  color: #17858180;
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: bold;
@@ -63,7 +66,7 @@ header {
   transform-origin: left;
   height: 1px;
   width: 40px;
-  background-color: #9dfc676b;
+  background-color: #bfa1816d;
   transition: transform 0.15s ease, width 0.15s ease;
 }
 
@@ -73,13 +76,13 @@ header {
   transform: translateY(-50%) scaleX(1);
   height: 1px;
   width: 80px;
-  background-color: #9efc67f1;
+  background-color: #bfa181;
 }
 
 /* Hover and Active text style */
 .nav-menu a:hover,
 .nav-menu a.active {
-  color: #ecdfff;
+  color: #1aded7;
   font-weight: bold;
   padding-left: 6rem;
 }
@@ -94,49 +97,336 @@ header {
 
 #hero h1 {
   font-size: 3rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
 }
 
 #hero h2 {
   font-size: 1rem;
-  margin-bottom: 1rem;
-  color: #e0e0f0bd;
+  margin-bottom: 0.2rem;
+  color: #a0b1c4;
 }
 
 #hero p {
   font-size: 1rem;
-  color: #e0e0f0a3;
+  color: #a0b1c4bb;
+  margin-top: 0.5rem;
 }
 
 section {
-  min-height: 100vh;
-  padding: 4rem;
+  padding: 2rem 4rem;
   scroll-margin-top: 80px; /* avoids being hidden behind fixed column */
 }
 
 .layout {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  min-height: 100vh;
+  display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
+.hero-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #1aded7; /* turquoise */
+  margin: 0.5rem 0 0.8rem;
+  opacity: 0.75; /* slightly subtle */
+}
+
 .fixed-column {
-  z-index: 0;
-  flex: 0 0 35%;
-  padding: 3rem;
+  flex: 0 0 clamp(300px, 32vw, 440px);
+  width: clamp(300px, 32vw, 440px);
+  padding-left: clamp(2rem, 5vw, 4rem);
+  padding-right: 0.5rem;
+  padding-top: 4rem;
+  height: 100vh;
   position: sticky;
   top: 0;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 4rem;
   background-color: transparent;
+  z-index: 10;
 }
 
 .scrolling-content {
-  flex: 1;
+  flex: 1 1 600px;
+  max-width: 900px;
+  color: #a0b1c4bb;
+  padding: 4rem 3rem 0rem 3rem;
   overflow-y: auto;
   height: 100vh;
-  padding: 4rem;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  box-sizing: border-box;
+  line-height: 1.7;
+}
+.scrolling-content::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .fixed-column {
+  padding-left: clamp(2rem, 8vw, 6rem);
+    position: relative;
+    height: auto;
+    max-width: 100%;
+  }
+
+  .scrolling-content {
+    height: auto;
+    padding: clamp(1rem, 5vw, 3rem);
+  }
+}
+.highlight {
+  color: #dbebfc;
+  font-weight: normal;
+}
+
+.experience-entry {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  cursor: pointer;
+  border-radius: 0px;
+  background-color: rgba(26, 237, 215, 0);
+  transform: translateY(0px);
+  transition: background-color 0.4s ease-out, border-radius 0.4s ease-out, transform 0.4s ease-out;
+  will-change: background-color, border-radius, transform;
+  line-height: 1.6;
+}
+
+.experience-entry:hover {
+  background-color: rgba(26, 237, 215, 0.04);
+  border-radius: 12px;
+  transform: translateY(-2px);
+}
+
+.date {
+  flex-shrink: 0;
+  width: 125px;
+  font-size: 0.8rem;
+  color: #a0b1c4;
+}
+
+.content {
+  position: relative;
+  width: 100%;
+}
+
+.content h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #dbebfc;
+  transition: color 0.4s ease;
+  line-height: 1.4;
+}
+
+/* Card arrow indicator */
+.card-arrow {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.card-arrow-icon {
+  position: relative;
+  width: 16px;
+  height: 12px;
+}
+
+.card-arrow-icon::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  width: 10px;
+  height: 2px;
+  background-color: #a0b1c4bb;
+  transform: rotate(-45deg);
+  transform-origin: left center;
+  border-radius: 1px;
+  transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.card-arrow-icon::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  width: 10px;
+  height: 2px;
+  background-color: #a0b1c4bb;
+  transform: rotate(45deg);
+  transform-origin: right center;
+  border-radius: 1px;
+  transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Expanding state - smooth transition to down caret */
+.card-arrow-icon.expanding::before {
+  transform: rotate(45deg);
+}
+
+.card-arrow-icon.expanding::after {
+  transform: rotate(-45deg);
+}
+
+/* Expanded state - maintain down caret */
+.card-arrow-icon.expanded::before {
+  transform: rotate(45deg);
+}
+
+.card-arrow-icon.expanded::after {
+  transform: rotate(-45deg);
+}
+
+/* Collapsing state - smooth transition back to up caret */
+.card-arrow-icon.collapsing::before {
+  transform: rotate(-45deg);
+}
+
+.card-arrow-icon.collapsing::after {
+  transform: rotate(45deg);
+}
+
+/* Arrow color changes on hover/active */
+.experience-entry:hover .card-arrow-icon::before,
+.experience-entry:hover .card-arrow-icon::after,
+.experience-entry.active .card-arrow-icon::before,
+.experience-entry.active .card-arrow-icon::after {
+  background-color: #1aded7;
+}
+
+.content h4 {
+  margin: 0.05rem 0 0.8rem;
+  font-size: 0.85rem;
+  color: #a0b1c4bb;
+  transition: color 0.4s ease;
+  line-height: 1.5;
+}
+
+.content h4 a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.4s ease;
+}
+
+/* Hover states */
+.experience-entry:hover .content h3 {
+  color: #1aded7;
+}
+
+.experience-entry:hover .content h4 {
+  color: #bfa181;
+}
+
+/* Active/expanded states */
+.experience-entry.active .content h3 {
+  color: #1aded7;
+}
+
+.experience-entry.active .content h4 {
+  color: #bfa181;
+}
+
+/* Focus effect - add class to container when any card is hovered/active */
+.scrolling-content .experience-entry {
+  opacity: 1;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease-out, border-radius 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.scrolling-content .experience-entry * {
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrolling-content.card-focused .experience-entry:not(:hover):not(.active) {
+  opacity: 0.6;
+}
+
+.scrolling-content.card-focused .experience-entry:not(:hover):not(.active) * {
+  color: #a0b1c470 !important;
+}
+
+.scrolling-content #about {
+  opacity: 1;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrolling-content #about * {
+  transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrolling-content.card-focused #about {
+  opacity: 0.65;
+}
+
+.scrolling-content.card-focused #about * {
+  color: #a0b1c470 !important;
+}
+/* Description transition update (faster and smooth) */
+.description {
+  margin-top: 0.5rem;
+  max-height: 4.5rem;
+  overflow: hidden;
+  position: relative;
+  transition: max-height 0.6s ease-in-out;
+}
+
+.description.expanded {
+  max-height: 800px;
+  transition: max-height 0.6s ease-in-out;
+}
+
+.description::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.description.expanded::after {
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tags {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  background-color: #003e3e;
+  color: #1aded7;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Make description paragraph text more transparent for "out of focus" effect */
+.description p {
+  color: #a0b1c4bb;
 }

@@ -1,56 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kevin Ni</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="spotlight"></div>
-
-  <div class="layout">
-    <!-- Left (Fixed Hero & Nav) -->
-    <section id="hero" class="fixed-column">
-      <h1>Kevin Ni</h1>
-      <h2>Artificial Intelligence X Finance</h2>
-      <p>Bachelor of Applied Science in Engineering Science</br />Major in Robotics Engineering<br />Minor in Engineering Business<br />Minor in Artificial Intelligence</p>
-      <nav>
-        <ul class="nav-menu vertical">
-          <li><a href="#about" class="nav-link">ABOUT</a></li>
-          <li><a href="#experience" class="nav-link">EXPERIENCE</a></li>
-          <li><a href="#projects" class="nav-link">PROJECTS</a></li>
-          <li><a href="#hobbies" class="nav-link">HOBBIES</a></li>
-          <li><a href="#photos" class="nav-link">PHOTOS</a></li>
-        </ul>
-      </nav>
-    </section>
-
-    <!-- Right (Scrolling Content) -->
-    <div class="scrolling-content">
-      <section id="about">
-        <h2>ABOUT</h2>
-        <p>Write about yourself here...</p>
-      </section>
-      <section id="experience">
-        <h2>EXPERIENCE</h2>
-        <p>Showcase your work...</p>
-      </section>
-      <section id="projects">
-        <h2>PROJECTS</h2>
-        <p>Provide project details...</p>
-      </section>
-      <section id="hobbies">
-        <h2>HOBBIES</h2>
-        <p>Share your hobbies...</p>
-      </section>
-      <section id="photos">
-        <h2>PHOTOS</h2>
-      </section>
-    </div>
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Kevin Ni
+  </title>
+  <link href="styles.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+ </head>
+ <body>
+  <div class="spotlight">
   </div>
-
-  <script src="script.js"></script>
-</body>
-
+  <div class="layout">
+   <section class="fixed-column" id="hero">
+    <h1>
+     Kevin Ni
+    </h1>
+    <div class="hero-divider">
+    </div>
+    <h2>
+     Artificial Intelligence X Finance
+    </h2>
+    <p>
+     Bachelor of Applied Science in Engineering Science
+     Major in Robotics Engineering
+     <br/>
+     Minor in Engineering Business
+     <br/>
+     Minor in Artificial Intelligence
+    </p>
+    <nav>
+     <ul class="nav-menu vertical">
+      <li>
+       <a class="nav-link" href="#about">
+        ABOUT
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="#education-experience">
+        EDUCATION | EXPERIENCE
+       </a>
+      </li>
+      <li>
+       <a class="nav-link" href="#projects">
+        PROJECTS
+       </a>
+      </li>
+     </ul>
+    </nav>
+   </section>
+   <div class="scrolling-content">
+    <section id="about">
+     <p>
+      I'm a 4th-year Engineering Science student at the
+      <span class="highlight">
+       University of Toronto
+      </span>
+      , majoring in
+      <span class="highlight">
+       Robotics Engineering
+      </span>
+      , double minoring in
+      <span class="highlight">
+       Engineering Business
+      </span>
+      and
+      <span class="highlight">
+       Artificial Intelligence
+      </span>
+      . While my academic foundation is rooted in robotics, my true passion lies in the intersection of artificial intelligence and finance &mdash; fields I aim to bridge through a career in fintech.
+     </p>
+     <p>
+      I've been a member of project teams like
+      <span class="highlight">
+       RSX (Robotics for Space Exploration)
+      </span>
+      and
+      <span class="highlight">
+       AutoToronto
+      </span>
+      , where I gained hands-on experience solving complex, systems-level problems in robotics. Most recently, I completed a co-op at
+      <span class="highlight">
+       Smith + Andersen
+      </span>
+      , an engineering consulting firm, as a Junior Electrical Designer. Despite having no prior background in building systems, I immersed myself in the field &mdash; coordinating directly with architects, contractors, and sales reps, conducting site surveys, producing engineering drawings, and leading pricing reviews. It was a transformative experience that showcased my ability to learn quickly, work cross-functionally, and contribute confidently &mdash; even outside my primary domain of interest.
+     </p>
+     <p>
+      Now, I&rsquo;m focused on pivoting more directly into the fintech space. My fourth-year thesis, supervised by
+      <span class="highlight">
+       Professor Roy Kwon
+      </span>
+      , explores the synergy between AI and financial systems. I'm also pursuing this path academically through courses like APS502 (Financial Engineering), ECE368 (Probabilistic Reasoning), and CSC413 (Neural Networks and Deep Learning).
+     </p>
+     <p>
+      Outside of school and work, I&rsquo;m an adventurer at heart. I'm a certified deep-water scuba diver, licensed boater, and sport angler. In February 2025, I traveled to the Gal&aacute;pagos Islands, where I dove with sea turtles, sea lions, and various species of sharks. I&rsquo;m always exploring new hobbies &mdash; this past year, I got into building Gundam models and LEGOs, gardening, fishing, photography, badminton, and golf. I've also been playing the flute for over 10 years, performing with various bands and orchestras&mdash;including the Rosebud Orchestra in Brampton during high school. I&rsquo;m also a passionate foodie who loves cooking for friends and family, researching recipes, and discovering new spots to eat.
+     </p>
+    </section>
+    <section id="education-experience">
+     <div class="experience-entry">
+      <div class="date">
+       2024 &mdash; PRESENT
+      </div>
+      <div class="content">
+       <div class="card-arrow"><span class="card-arrow-icon"></span></div>
+       <h3>
+        Smith + Andersen
+       </h3>
+       <div class="description">
+        <h4>
+         Junior Electrical Designer &middot; 2024
+        </h4>
+        <p>
+         Coordinated with architects and contractors, conducted pricing reviews, site surveys, and designed engineering drawings. Demonstrated strong adaptability in a non-fintech field.
+        </p>
+       </div>
+       <div class="tags">
+        <span class="tag">
+         Revit
+        </span>
+        <span class="tag">
+         AutoCAD
+        </span>
+        <span class="tag">
+         Microsoft Office
+        </span>
+       </div>
+      </div>
+     </div>
+     <div class="experience-entry">
+      <div class="date">
+       2024 &mdash; PRESENT
+      </div>
+      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
+       <h3>
+        xxx
+       </h3>
+       <div class="description">
+        <p>
+         xxx
+        </p>
+        <p>
+         xxx
+        </p>
+       </div>
+       <div class="tags">
+        <span class="tag">
+         Python
+        </span>
+        <span class="tag">
+         AutoCAD
+        </span>
+        <span class="tag">
+         Teamwork
+        </span>
+       </div>
+      </div>
+     </div>
+     <div class="experience-entry">
+      <div class="date">
+       2024 &mdash; PRESENT
+      </div>
+      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
+       <h3>
+        xxx
+       </h3>
+       <div class="description">
+        <p>
+         xxx
+        </p>
+        <p>
+         xxx
+        </p>
+       </div>
+       <div class="tags">
+        <span class="tag">
+         Python
+        </span>
+        <span class="tag">
+         AutoCAD
+        </span>
+        <span class="tag">
+         Teamwork
+        </span>
+       </div>
+      </div>
+     </div>
+    </section>
+    <section id="projects">
+     <div class="experience-entry">
+      <div class="date">
+       2024 &mdash; PRESENT
+      </div>
+      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
+       <h3>
+        xxx
+       </h3>
+       <div class="description">
+        <p>
+         xxx
+        </p>
+        <p>
+         xxx
+        </p>
+       </div>
+       <div class="tags">
+        <span class="tag">
+         Python
+        </span>
+        <span class="tag">
+         AutoCAD
+        </span>
+        <span class="tag">
+         Teamwork
+        </span>
+       </div>
+      </div>
+     </div>
+     <div class="experience-entry">
+      <div class="date">
+       2024 &mdash; PRESENT
+      </div>
+      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
+       <h3>
+        xxx
+       </h3>
+       <div class="description">
+        <p>
+         xxx
+        </p>
+        <p>
+         xxx
+        </p>
+       </div>
+       <div class="tags">
+        <span class="tag">
+         Python
+        </span>
+        <span class="tag">
+         AutoCAD
+        </span>
+        <span class="tag">
+         Teamwork
+        </span>
+       </div>
+      </div>
+     </div>
+    </section>
+   </div>
+  </div>
+  <script src="script.js">
+  </script>
+ </body>
 </html>
