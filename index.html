@@ -1,331 +1,1091 @@
 <!DOCTYPE html>
 <html lang="en">
- <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>
-   Kevin Ni
-  </title>
-  <link href="styles.css" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
- </head>
- <body>
-  <div class="spotlight">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kevin Ni // Robotics × AI × Quant</title>
+<meta name="description" content="Kevin Ni — Engineering Science (Robotics) at the University of Toronto. Building at the edge of autonomous systems, machine learning, and quantitative finance." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --void:#05060a;
+  --void-2:#080b12;
+  --panel:#0b0f18;
+  --panel-2:#0e1421;
+  --line:rgba(0,240,255,.18);
+  --line-strong:rgba(0,240,255,.42);
+  --acid:#fcee0a;
+  --cyan:#00f0ff;
+  --magenta:#ff2e97;
+  --text:#d7deec;
+  --muted:#7c89a6;
+  --muted-2:#54607a;
+  --display:'Rajdhani',system-ui,sans-serif;
+  --body:'Chakra Petch',system-ui,sans-serif;
+  --mono:'Share Tech Mono',ui-monospace,monospace;
+  --maxw:1180px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{
+  margin:0;
+  background:var(--void);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.6;
+  letter-spacing:.01em;
+  overflow-x:clip;
+  -webkit-font-smoothing:antialiased;
+}
+body.no-scroll{overflow:hidden}
+
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:var(--acid);color:#000}
+
+/* ---------- background 3D canvas ---------- */
+#bg{
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  z-index:0;
+  display:block;
+}
+.bg-fallback{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 50% 120%, rgba(0,240,255,.10), transparent 60%),
+    radial-gradient(90% 70% at 80% -10%, rgba(255,46,151,.10), transparent 60%),
+    var(--void);
+  display:none;
+}
+body.no-webgl .bg-fallback{display:block}
+
+/* scanline + vignette overlay */
+.fx-overlay{
+  position:fixed; inset:0; z-index:2; pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.16) 2px 3px);
+  mix-blend-mode:multiply;
+  opacity:.5;
+}
+.fx-vignette{
+  position:fixed; inset:0; z-index:2; pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+}
+/* TV static — flashed on during 3D glitch bursts via JS */
+.static{
+  position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0;
+  mix-blend-mode:screen; will-change:opacity, transform;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.85'/%3E%3C/svg%3E");
+  background-size:180px 180px;
+}
+@media (prefers-reduced-motion: reduce){ .fx-overlay{display:none} .static{display:none} }
+
+/* ---------- custom reticle cursor (desktop, fine pointer) ---------- */
+.reticle{
+  position:fixed; top:0; left:0; z-index:60; pointer-events:none;
+  width:34px; height:34px; margin:-17px 0 0 -17px;
+  border:1px solid var(--cyan); border-radius:50%;
+  mix-blend-mode:difference;
+  transition:transform .12s ease, opacity .2s ease, border-color .2s ease;
+  display:none;
+}
+.reticle::before,.reticle::after{
+  content:''; position:absolute; background:var(--cyan);
+}
+.reticle::before{left:50%; top:50%; width:3px; height:3px; transform:translate(-50%,-50%); border-radius:50%}
+.reticle.hot{border-color:var(--acid); transform:scale(1.5)}
+.reticle.hot::before{background:var(--acid)}
+@media (hover:hover) and (pointer:fine){ .reticle{display:block} }
+@media (prefers-reduced-motion: reduce){ .reticle{display:none} }
+
+/* ---------- boot sequence ---------- */
+#boot{
+  position:fixed; inset:0; z-index:100;
+  background:var(--void);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); color:var(--cyan);
+  transition:opacity .6s ease;
+}
+#boot.done{opacity:0; pointer-events:none}
+.boot-inner{width:min(540px,86vw)}
+.boot-line{font-size:.82rem; letter-spacing:.04em; white-space:pre; min-height:1.3em; color:var(--muted)}
+.boot-line b{color:var(--cyan); font-weight:400}
+.boot-line .ok{color:var(--acid)}
+.boot-bar{
+  margin-top:18px; height:2px; background:rgba(255,255,255,.08); position:relative; overflow:hidden;
+}
+.boot-bar i{position:absolute; inset:0 100% 0 0; background:var(--cyan); box-shadow:0 0 12px var(--cyan)}
+.boot-brand{font-family:var(--display); font-weight:700; letter-spacing:.5em; color:var(--text); font-size:.8rem; margin-bottom:22px}
+
+/* ---------- shared structure ---------- */
+.wrap{position:relative; z-index:3}
+.container{width:100%; max-width:var(--maxw); margin:0 auto; padding:0 clamp(20px,5vw,56px)}
+
+.eyebrow{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.32em; text-transform:uppercase;
+  color:var(--cyan); display:inline-flex; align-items:center; gap:.7ch;
+}
+.eyebrow::before{content:'//'; color:var(--magenta)}
+
+/* corner-bracket panel */
+.panel{position:relative; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--line)}
+.panel::before,.panel::after{
+  content:''; position:absolute; width:14px; height:14px; pointer-events:none;
+}
+.panel::before{top:-1px; left:-1px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan)}
+.panel::after{bottom:-1px; right:-1px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan)}
+
+/* glitch heading */
+.glitch{position:relative; display:inline-block}
+.glitch::before,.glitch::after{
+  content:attr(data-text); position:absolute; left:0; top:0; width:100%;
+  clip-path:inset(0 0 0 0); opacity:0; pointer-events:none;
+}
+.glitch:hover::before{opacity:.9; color:var(--magenta); transform:translate(-2px,-1px); animation:gl1 .5s steps(2) infinite}
+.glitch:hover::after{opacity:.9; color:var(--cyan); transform:translate(2px,1px); animation:gl2 .5s steps(2) infinite}
+@keyframes gl1{0%{clip-path:inset(0 0 72% 0)}50%{clip-path:inset(40% 0 30% 0)}100%{clip-path:inset(78% 0 0 0)}}
+@keyframes gl2{0%{clip-path:inset(82% 0 0 0)}50%{clip-path:inset(20% 0 55% 0)}100%{clip-path:inset(0 0 80% 0)}}
+@media (prefers-reduced-motion: reduce){ .glitch:hover::before,.glitch:hover::after{display:none} }
+
+/* reveal on scroll */
+.reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease}
+.reveal.in{opacity:1; transform:none}
+@media (prefers-reduced-motion: reduce){ .reveal{opacity:1; transform:none; transition:none} }
+
+/* ---------- top nav ---------- */
+.nav{
+  position:fixed; top:0; left:0; right:0; z-index:40;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px clamp(20px,5vw,56px);
+  background:linear-gradient(180deg, rgba(5,6,10,.85), rgba(5,6,10,0));
+  backdrop-filter:blur(6px);
+}
+.nav .brand{font-family:var(--display); font-weight:700; letter-spacing:.18em; font-size:1.02rem}
+.nav .brand b{color:var(--acid)}
+.nav .brand .tick{color:var(--magenta)}
+.nav-links{display:flex; gap:26px; align-items:center; font-family:var(--mono); font-size:.74rem; letter-spacing:.18em}
+.nav-links a{color:var(--muted); position:relative; padding:6px 0; text-transform:uppercase; transition:color .2s}
+.nav-links a .idx{color:var(--magenta); margin-right:.5ch}
+.nav-links a::after{content:''; position:absolute; left:0; bottom:0; height:1px; width:0; background:var(--cyan); box-shadow:0 0 8px var(--cyan); transition:width .25s}
+.nav-links a:hover,.nav-links a.active{color:var(--text)}
+.nav-links a.active::after,.nav-links a:hover::after{width:100%}
+.nav-cta{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--acid); border:1px solid var(--line-strong); padding:8px 14px; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+  transition:background .2s, color .2s;
+}
+.nav-cta:hover{background:var(--acid); color:#000}
+.nav-burger{display:none; background:none; border:1px solid var(--line-strong); color:var(--cyan); width:40px; height:36px; cursor:pointer; font-family:var(--mono)}
+
+@media (max-width:860px){
+  .nav-links{
+    position:fixed; inset:60px 0 auto 0; flex-direction:column; gap:0;
+    background:var(--void-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    padding:8px 0; transform:translateY(-130%); transition:transform .3s ease;
+  }
+  .nav-links.open{transform:none}
+  .nav-links a{padding:14px clamp(20px,5vw,56px); width:100%; border-bottom:1px solid rgba(255,255,255,.04)}
+  .nav-cta{display:none}
+  .nav-burger{display:block}
+}
+
+/* ---------- hero ---------- */
+.hero{min-height:100svh; display:flex; align-items:center; position:relative; padding-top:90px}
+.hero::before{
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(90deg, rgba(5,6,10,.9) 0%, rgba(5,6,10,.62) 38%, rgba(5,6,10,0) 64%);
+}
+.hero-grid{display:grid; grid-template-columns:1.25fr .75fr; gap:40px; align-items:center; width:100%}
+.hero-status{font-family:var(--mono); font-size:.74rem; letter-spacing:.22em; color:var(--muted); margin-bottom:22px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.dot{width:8px; height:8px; border-radius:50%; background:var(--acid); box-shadow:0 0 10px var(--acid); animation:blink 1.6s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.hero h1{
+  font-family:var(--display); font-weight:700; line-height:.9; margin:0;
+  font-size:clamp(3.4rem,12vw,8.4rem); letter-spacing:.01em; color:#fff;
+  text-shadow:0 0 22px rgba(0,240,255,.25);
+}
+.hero h1 .l2{color:var(--cyan); display:block}
+.hero .role{
+  font-family:var(--mono); font-size:clamp(.82rem,2.2vw,1.05rem); letter-spacing:.28em;
+  color:var(--acid); margin:18px 0 0; text-transform:uppercase;
+}
+.hero .tagline{max-width:46ch; color:var(--muted); margin:22px 0 0; font-size:clamp(1rem,1.4vw,1.12rem)}
+.hero .tagline .hl{color:var(--text)}
+.hero-actions{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap}
+.btn{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase;
+  padding:13px 22px; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:10px;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+}
+.btn-primary{background:var(--acid); color:#000; border:1px solid var(--acid)}
+.btn-primary:hover{background:transparent; color:var(--acid); box-shadow:0 0 22px rgba(252,238,10,.35)}
+.btn-ghost{background:transparent; color:var(--cyan); border:1px solid var(--line-strong)}
+.btn-ghost:hover{border-color:var(--cyan); box-shadow:0 0 22px rgba(0,240,255,.3)}
+
+.hero-id{align-self:center}
+.id-card{padding:20px; font-family:var(--mono); font-size:.78rem}
+.id-card .row{display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px dashed rgba(255,255,255,.08)}
+.id-card .row:last-child{border-bottom:0}
+.id-card .k{color:var(--muted-2); letter-spacing:.14em}
+.id-card .v{color:var(--text); text-align:right}
+.id-card .v.acid{color:var(--acid)}
+.id-card .v.cyan{color:var(--cyan)}
+.id-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:12px; border-bottom:1px solid var(--line)}
+.id-head .tag{color:var(--magenta); letter-spacing:.2em}
+.id-head .barcode{display:flex; gap:2px; height:18px}
+.id-head .barcode i{width:2px; background:var(--muted); display:block}
+
+.scroll-hint{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:.68rem; letter-spacing:.28em; color:var(--muted-2); display:flex; flex-direction:column; align-items:center; gap:8px}
+.scroll-hint .bar{width:1px; height:34px; background:linear-gradient(var(--cyan),transparent); animation:drop 1.8s ease-in-out infinite}
+@keyframes drop{0%,100%{opacity:.2; transform:scaleY(.5)}50%{opacity:1; transform:scaleY(1)}}
+
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr; gap:28px}
+  .hero-id{order:2}
+  .hero{padding-top:110px; min-height:auto; padding-bottom:60px}
+}
+
+/* ---------- section frame ---------- */
+section.block{position:relative; padding:clamp(70px,9vw,120px) 0}
+.sec-head{display:flex; align-items:baseline; gap:18px; margin-bottom:42px; flex-wrap:wrap}
+.sec-num{font-family:var(--mono); color:var(--magenta); font-size:.9rem; letter-spacing:.1em}
+.sec-title{font-family:var(--display); font-weight:700; font-size:clamp(1.8rem,5vw,3rem); letter-spacing:.04em; color:#fff; line-height:1; margin:0}
+.sec-rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line-strong),transparent); align-self:center; min-width:40px}
+
+/* ---------- about ---------- */
+.about-grid{display:grid; grid-template-columns:1.4fr .9fr; gap:34px}
+.about-copy{position:relative; padding:26px 28px; background:linear-gradient(180deg, rgba(8,11,18,.5), rgba(8,11,18,.85)); border-left:2px solid var(--cyan); box-shadow:-1px 0 26px rgba(0,240,255,.07)}
+.about-copy p{margin:0 0 18px; color:var(--muted); font-size:1.04rem}
+.about-copy p:last-child{margin-bottom:0}
+.about-copy p .hl{color:var(--text)}
+.about-copy p .acid{color:var(--acid)}
+.about-copy p .cyan{color:var(--cyan)}
+.stats{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-content:start}
+.stat{padding:18px; position:relative}
+.stat .num{font-family:var(--display); font-weight:700; font-size:2rem; color:var(--cyan); line-height:1}
+.stat .num.acid{color:var(--acid)} .stat .num.mag{color:var(--magenta)}
+.stat .lbl{font-family:var(--mono); font-size:.66rem; letter-spacing:.16em; color:var(--muted-2); text-transform:uppercase; margin-top:8px}
+
+/* right-column stack: signature stats + off-duty daemons */
+.side-stack{display:flex; flex-direction:column; gap:14px; align-content:start}
+.mini-stats{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.daemons{padding:18px 20px}
+.daemon-head{font-family:var(--mono); font-size:.64rem; letter-spacing:.18em; text-transform:uppercase; color:var(--magenta); margin-bottom:14px; display:flex; align-items:center; gap:8px}
+.daemon-head::before{content:'\25b8'; color:var(--cyan)}
+.daemon-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px}
+.daemon-list li{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:.76rem; letter-spacing:.04em; color:var(--text)}
+.d-dot{width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); animation:blink 1.6s steps(2) infinite}
+.daemon-list li:nth-child(2n) .d-dot{background:var(--acid); box-shadow:0 0 8px var(--acid); animation-delay:.4s}
+.daemon-list li:nth-child(3n) .d-dot{background:var(--magenta); box-shadow:0 0 8px var(--magenta); animation-delay:.8s}
+.d-meta{margin-left:auto; color:var(--muted-2); font-size:.64rem; letter-spacing:.1em; text-align:right}
+@media (max-width:860px){ .about-grid{grid-template-columns:1fr} }
+
+/* ---------- timeline / experience ---------- */
+.timeline{position:relative}
+.entry{display:grid; grid-template-columns:160px 1fr; gap:26px; padding:0 0 14px}
+.entry .when{font-family:var(--mono); font-size:.76rem; letter-spacing:.1em; color:var(--muted-2); padding-top:22px}
+.entry .when .now{color:var(--acid)}
+.entry .card{padding:22px 24px; cursor:pointer; transition:border-color .25s, transform .25s}
+.entry .card:hover{border-color:var(--line-strong); transform:translateX(4px)}
+.entry .card .role-co{display:flex; justify-content:space-between; align-items:flex-start; gap:14px}
+.entry .card h3{font-family:var(--display); font-weight:700; font-size:1.35rem; letter-spacing:.02em; margin:0; color:#fff}
+.entry .card .sub{font-family:var(--mono); font-size:.74rem; letter-spacing:.12em; color:var(--cyan); margin-top:4px; text-transform:uppercase}
+.entry .card .toggle{font-family:var(--mono); color:var(--magenta); font-size:1.1rem; line-height:1; transition:transform .3s}
+.entry .card.open .toggle{transform:rotate(45deg)}
+.entry .card .body{max-height:0; overflow:hidden; transition:max-height .4s ease, margin .4s ease; margin-top:0}
+.entry .card.open .body{margin-top:16px}
+.entry .card .body p{margin:0 0 12px; color:var(--muted); font-size:.98rem}
+.entry .card .body ul{margin:0; padding-left:18px; color:var(--muted)}
+.entry .card .body li{margin-bottom:8px; font-size:.95rem}
+.entry .card .body li b{color:var(--text); font-weight:600}
+.tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+.tag{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border:1px solid var(--line); padding:5px 10px; transition:all .2s}
+.entry .card:hover .tag{border-color:var(--line-strong)}
+@media (max-width:680px){ .entry{grid-template-columns:1fr; gap:6px} .entry .when{padding-top:0} }
+
+/* ---------- projects ---------- */
+.proj-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:20px}
+.proj{padding:24px; position:relative; transition:transform .25s, border-color .25s; overflow:hidden}
+.proj:hover{transform:translateY(-5px); border-color:var(--line-strong)}
+.proj .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px}
+.proj .pid{font-family:var(--mono); font-size:.68rem; letter-spacing:.14em; color:var(--magenta)}
+.proj .pdate{font-family:var(--mono); font-size:.68rem; color:var(--muted-2); letter-spacing:.1em}
+.proj h3{font-family:var(--display); font-weight:700; font-size:1.3rem; margin:0 0 4px; color:#fff; letter-spacing:.02em}
+.proj .stack{font-family:var(--mono); font-size:.7rem; color:var(--cyan); letter-spacing:.08em; margin-bottom:14px}
+.proj p{margin:0; color:var(--muted); font-size:.95rem}
+.proj .metric{display:flex; gap:18px; margin-top:16px; flex-wrap:wrap}
+.proj .metric .m{font-family:var(--mono); font-size:.72rem; color:var(--muted)}
+.proj .metric .m b{color:var(--acid); font-size:1.05rem; display:block; font-weight:400; letter-spacing:.05em}
+.proj::after{content:''; position:absolute; top:0; right:0; width:46px; height:46px; background:linear-gradient(225deg,var(--magenta),transparent 60%); opacity:.16; transition:opacity .25s}
+.proj:hover::after{opacity:.4}
+@media (max-width:760px){ .proj-grid{grid-template-columns:1fr} }
+
+/* ---------- arsenal / skills ---------- */
+.arsenal{display:grid; grid-template-columns:repeat(2,1fr); gap:18px}
+.kit{padding:22px}
+.kit h4{font-family:var(--mono); font-size:.74rem; letter-spacing:.18em; text-transform:uppercase; color:var(--magenta); margin:0 0 16px; display:flex; align-items:center; gap:10px}
+.kit h4::before{content:'▣'; color:var(--cyan)}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-family:var(--mono); font-size:.74rem; letter-spacing:.06em; color:var(--text); background:rgba(0,240,255,.05); border:1px solid var(--line); padding:7px 12px; transition:all .2s}
+.chip:hover{border-color:var(--cyan); color:var(--cyan); background:rgba(0,240,255,.1)}
+@media (max-width:760px){ .arsenal{grid-template-columns:1fr} }
+
+/* ---------- contact ---------- */
+.contact-card{padding:clamp(28px,5vw,52px); text-align:center}
+.contact-card .eyebrow{justify-content:center; margin-bottom:18px}
+.contact-card h2{font-family:var(--display); font-weight:700; font-size:clamp(2rem,6vw,3.6rem); margin:0 0 14px; color:#fff; letter-spacing:.03em}
+.contact-card p{color:var(--muted); max-width:54ch; margin:0 auto 30px}
+.contact-links{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+.clink{font-family:var(--mono); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; padding:13px 20px; border:1px solid var(--line-strong); color:var(--text); display:inline-flex; gap:10px; align-items:center; transition:all .2s; clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.clink:hover{color:#000; background:var(--cyan); border-color:var(--cyan)}
+.clink.acid:hover{background:var(--acid)}
+.clink.mag:hover{background:var(--magenta)}
+.clink svg{width:16px;height:16px;fill:currentColor}
+
+footer{position:relative; padding:30px 0 50px; border-top:1px solid var(--line); margin-top:60px; background:linear-gradient(180deg, rgba(5,6,10,.25) 0%, rgba(5,6,10,.93) 38%, rgba(5,6,10,.99) 100%)}
+.foot{display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; font-family:var(--mono); font-size:.72rem; letter-spacing:.1em; color:var(--muted)}
+.foot .acid{color:var(--acid)}
+
+/* utility */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+a:focus-visible,button:focus-visible,.btn:focus-visible{outline:2px solid var(--acid); outline-offset:3px}
+</style>
+</head>
+<body class="no-scroll">
+
+<!-- 3D background -->
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="bg-fallback" aria-hidden="true"></div>
+<div class="fx-overlay" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+<div class="static" id="staticFx" aria-hidden="true"></div>
+<div class="reticle" id="reticle" aria-hidden="true"></div>
+
+<!-- boot sequence -->
+<div id="boot" role="status" aria-live="polite">
+  <div class="boot-inner">
+    <div class="boot-brand">K&middot;NI // NETRUNNER OS</div>
+    <div class="boot-line" id="bootText"></div>
+    <div class="boot-bar"><i id="bootBar"></i></div>
   </div>
-  <div class="layout">
-   <section class="fixed-column" id="hero">
-    <div class="hero-content">
-     <h1>
-      Kevin Ni
-     </h1>
-     <div class="hero-divider">
-     </div>
-     <h2>
-      Artificial Intelligence X Finance
-     </h2>
-     <p>
-      Bachelor of Applied Science in Engineering Science
-      Major in Robotics Engineering
-      <br/>
-      Minor in Engineering Business
-      <br/>
-      Minor in Artificial Intelligence
-     </p>
-     <nav>
-      <ul class="nav-menu vertical">
-       <li>
-        <a class="nav-link" href="#about">
-         ABOUT
-        </a>
-       </li>
-       <li>
-        <a class="nav-link" href="#education-experience">
-         EDUCATION | EXPERIENCE
-        </a>
-       </li>
-       <li>
-        <a class="nav-link" href="#projects">
-         PROJECTS
-        </a>
-       </li>
-      </ul>
-     </nav>
-    </div>
-    <div class="social-icons">
-     <a href="https://www.linkedin.com/in/kevin-ni/" target="_blank" class="social-link" title="LinkedIn">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-      </svg>
-     </a>
-     <a href="https://github.com/Kevin-Ni22" target="_blank" class="social-link" title="GitHub">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-      </svg>
-     </a>
-     <a href="resume.pdf" target="_blank" class="social-link" title="Resume">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-       <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-      </svg>
-     </a>
-    </div>
-   </section>
-   <div class="scrolling-content">
-    <section id="about">
-     <p>
-      I'm a 4th-year Engineering Science student at the
-      <span class="highlight">
-       University of Toronto
-      </span>
-      , majoring in
-      <span class="highlight">
-       Robotics Engineering
-      </span>
-      , double minoring in
-      <span class="highlight">
-       Engineering Business
-      </span>
-      and
-      <span class="highlight">
-       Artificial Intelligence
-      </span>
-      . While my academic foundation is rooted in robotics, my true passion lies in the intersection of artificial intelligence and finance &mdash; fields I aim to bridge through a career in fintech.
-     </p>
-     <p>
-      I've been a member of project teams like
-      <span class="highlight">
-       RSX (Robotics for Space Exploration)
-      </span>
-      and
-      <span class="highlight">
-       AutoToronto
-      </span>
-      , where I gained hands-on experience solving complex, systems-level problems in robotics. Most recently, I completed a co-op at
-      <span class="highlight">
-       Smith + Andersen
-      </span>
-      , an engineering consulting firm, as a Junior Electrical Designer. Despite having no prior background in building systems, I immersed myself in the field &mdash; coordinating directly with architects, contractors, and sales reps, conducting site surveys, producing engineering drawings, and leading pricing reviews. It was a transformative experience that showcased my ability to learn quickly, work cross-functionally, and contribute confidently &mdash; even outside my primary domain of interest.
-     </p>
-     <p>
-      Now, I&rsquo;m focused on pivoting more directly into the fintech space. My fourth-year thesis, supervised by
-      <span class="highlight">
-       Professor Roy Kwon
-      </span>
-      , explores the synergy between AI and financial systems. Specifically the thesis will explore machine learning and convex optimization for moving band statistical arbitrage strategies. I'm also pursuing this path academically through courses like APS502 (Financial Engineering), ECE368 (Probabilistic Reasoning), and CSC413 (Neural Networks and Deep Learning).
-     </p>
-     <p>
-      Outside of school and work, I&rsquo;m an adventurer at heart. I'm a certified deep-water scuba diver, licensed boater, and sport angler. In February 2025, I traveled to the Gal&aacute;pagos Islands, where I dove with sea turtles, sea lions, and various species of sharks. I&rsquo;m always exploring new hobbies &mdash; this past year, I got into building Gundam models and LEGOs, gardening, fishing, photography, badminton, and golf. I've also been playing the flute for over 10 years, performing with various bands and orchestras&mdash;including the Rosebud Orchestra in Brampton during high school. I&rsquo;m also a passionate foodie who loves cooking for friends and family, researching recipes, and discovering new spots to eat.
-     </p>
-    </section>
-    <section id="education-experience">
-     <div class="experience-entry">
-      <div class="date">
-       2024 &mdash; PRESENT
-      </div>
-      <div class="content">
-       <div class="card-arrow"><span class="card-arrow-icon"></span></div>
-       <h3>
-        Smith + Andersen
-       </h3>
-       <div class="description">
-        <h4>
-         Junior Electrical Designer
-        </h4>
-        <p>
-         Coordinated with architects and contractors, conducted pricing reviews, site surveys, and designed engineering drawings. Demonstrated strong adaptability in a non-fintech field.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         Revit
-        </span>
-        <span class="tag">
-         AutoCAD
-        </span>
-        <span class="tag">
-         Microsoft Office
-        </span>
-       </div>
-      </div>
-     </div>
-     <div class="experience-entry">
-      <div class="date">
-       2023 &mdash; 2023
-      </div>
-      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
-       <h3>
-        Kevares Autonomous Services
-       </h3>
-        <h4>
-         Junior Mechatronics and Embedded Systems Specialist
-        </h4>
-       <div class="description">
-        <p>
-         This was my first internship in the robotics field, and it gave me a solid introduction to what it’s like working at a startup — fast-moving and full of figuring things out as you go. My main task at Kevares was building a streaming pipeline using Streamlabs, which let us send live camera footage directly to a browser. Near the end of my term, I started planning out a system to automatically detect sidewalk damage from the live feed. I didn’t get to finish it before the internship wrapped up, but the experience got me excited about using robotics and computer vision to solve real-world problems.
-        </p>
-        <p>
-         I was thrown into code early, and while that was intimidating at first, it ended up being a crash course in learning on the fly and writing software that actually mattered. I also started to see how robotics, AI, and web tech could intersect in unexpected ways — something that continues to shape how I think about my career in fintech and automation.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         Python
-        </span>
-        <span class="tag">
-         Streamlabs
-        </span>
-        <span class="tag">
-         HTML
-        </span>
-        <span class="tag">
-         CSS
-        </span>
-        <span class="tag">
-         JavaScript
-        </span>
-       </div>
-      </div>
-     </div>
-     <div class="experience-entry">
-      <div class="date">
-       2021 &mdash; 2023
-      </div>
-      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
-        <h3>
-         Costco
-        </h3>
-        <h4>
-         Cashier Assistant
-        </h4>
-       <div class="description">
-        <p>
-         Pushing carts all day in the heat wasn’t the most glamorous job, but it was real work — tough, physical, and surprisingly rewarding. I learned how to power through long shifts, stay positive even when it was 35°C and humid, thunderstorming or even blizzarding. It truly shifted my perspective and made me appreciate what it means to work hard.
-        </p>
-        <p>
-         The best part was the team - family that I still keep in touch with to this day. We looked out for each other, especially during the crazy rushes or when the weather turned bad. I made some great friends there, and it showed me how much easier hard work feels when you’re in it together.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         Communication
-        </span>
-        <span class="tag">
-         Leadership
-        </span>
-        <span class="tag">
-         Teamwork
-        </span>
-       </div>
-      </div>
-     </div>
-     <div class="experience-entry">
-      <div class="date">
-       2019 &mdash; 2021
-      </div>
-      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
-       <h3>
-        CoCo Fresh Tea and Juice
-       </h3>
-       <h4>
-        Cashier, Barista, Cook
-       </h4>
-       <div class="description">
-        <p>
-         My first job taught me the fundamentals of customer service and working in a fast-paced environment. I learned how to multitask effectively while maintaining quality, whether I was taking orders, making drinks, or preparing food during busy rushes.
-        </p>
-        <p>
-         Working in a small team environment taught me how important communication and reliability are. I gained experience handling cash, managing inventory, and maintaining food safety standards — skills that built a strong foundation for my work ethic.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         Customer Service
-        </span>
-        <span class="tag">
-         Multitasking
-        </span>
-        <span class="tag">
-         Food Safety
-        </span>
-       </div>
-      </div>
-     </div>     
-    </section>
-    <section id="projects">
-     <div class="experience-entry">
-      <div class="date">
-       2024 &mdash; PRESENT
-      </div>
-      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
-       <h3>
-        AI-Driven Financial Portfolio Optimization
-       </h3>
-       <h4>
-        Fourth-Year Thesis Project
-       </h4>
-       <div class="description">
-        <p>
-         My capstone thesis project, supervised by Professor Roy Kwon, explores the intersection of artificial intelligence and financial systems. The project focuses on developing machine learning algorithms to optimize portfolio allocation and risk management strategies.
-        </p>
-        <p>
-         This work combines my interests in robotics engineering with financial technology, using neural networks and probabilistic reasoning to create more efficient investment strategies. The project represents my pivot toward fintech and demonstrates practical applications of AI in finance.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         Python
-        </span>
-        <span class="tag">
-         Machine Learning
-        </span>
-        <span class="tag">
-         Financial Modeling
-        </span>
-        <span class="tag">
-         Neural Networks
-        </span>
-       </div>
-      </div>
-     </div>
-     <div class="experience-entry">
-      <div class="date">
-       2023 &mdash; 2024
-      </div>
-      <div class="content" ><div class="card-arrow"><span class="card-arrow-icon"></span></div>
-       <h3>
-        Personal Website Development
-       </h3>
-       <h4>
-        Full-Stack Web Development
-       </h4>
-       <div class="description">
-        <p>
-         Designed and built this responsive personal website from scratch using modern web technologies. The site features smooth animations, interactive card components, and a clean, professional design that showcases my background and projects.
-        </p>
-        <p>
-         Implemented advanced CSS animations, JavaScript interactivity, and responsive design principles. The project demonstrates my ability to create polished user experiences and attention to detail in front-end development.
-        </p>
-       </div>
-       <div class="tags">
-        <span class="tag">
-         HTML/CSS
-        </span>
-        <span class="tag">
-         JavaScript
-        </span>
-        <span class="tag">
-         Responsive Design
-        </span>
-        <span class="tag">
-         Animation
-        </span>
-       </div>
-      </div>
-     </div>
-    </section>
-   </div>
+</div>
+
+<!-- nav -->
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="#top">K<b>·</b>NI<span class="tick">_</span></a>
+  <div class="nav-links" id="navLinks">
+    <a href="#profile"><span class="idx">01</span>Profile</a>
+    <a href="#log"><span class="idx">02</span>Log</a>
+    <a href="#builds"><span class="idx">03</span>Builds</a>
+    <a href="#arsenal"><span class="idx">04</span>Arsenal</a>
+    <a href="#contact"><span class="idx">05</span>Contact</a>
   </div>
-  <script src="script.js">
-  </script>
- </body>
+  <a class="nav-cta" href="#contact" data-hot>Establish Link</a>
+  <button class="nav-burger" id="burger" aria-label="Toggle menu" aria-expanded="false">≡</button>
+</nav>
+
+<div class="wrap" id="top">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="container hero-grid">
+      <div class="hero-main">
+        <div class="hero-status">
+          <span class="dot"></span>
+          <span>TORONTO NODE</span><span style="color:var(--muted-2)">//</span>
+          <span>SYS.STATUS: <span style="color:var(--acid)">ONLINE</span></span><span style="color:var(--muted-2)">//</span>
+          <span>CLASS OF 2026</span>
+        </div>
+        <h1>KEVIN<span class="l2 glitch" data-text="NI">NI</span></h1>
+        <div class="role" id="roleLine">ROBOTICS ENGINEER · ML · QUANT</div>
+        <p class="tagline">
+          Final-year <span class="hl">Engineering Science (Robotics)</span> at the University of Toronto,
+          operating at the seam where <span class="hl">autonomous systems</span>, <span class="hl">machine learning</span>,
+          and <span class="hl">quantitative finance</span> collide.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#builds" data-hot>View Builds</a>
+          <a class="btn btn-ghost" href="#contact" data-hot>Establish Link</a>
+        </div>
+      </div>
+
+      <div class="hero-id">
+        <div class="panel id-card reveal">
+          <div class="id-head">
+            <span class="tag">ID // 0302</span>
+            <span class="barcode" id="barcode"></span>
+          </div>
+          <div class="row"><span class="k">OPERATOR</span><span class="v">Kevin Ni</span></div>
+          <div class="row"><span class="k">FACTION</span><span class="v cyan">UofT EngSci</span></div>
+          <div class="row"><span class="k">DISCIPLINE</span><span class="v">Robotics</span></div>
+          <div class="row"><span class="k">SUBCLASS</span><span class="v">Eng Business · AI</span></div>
+          <div class="row"><span class="k">CLEARANCE</span><span class="v acid">Skoll Scholar</span></div>
+          <div class="row"><span class="k">LOCATION</span><span class="v">Toronto, ON</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint" aria-hidden="true"><span>SCROLL</span><span class="bar"></span></div>
+  </header>
+
+  <!-- PROFILE -->
+  <section class="block" id="profile" aria-labelledby="profile-t">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="sec-num">01</span>
+        <h2 class="sec-title glitch" id="profile-t" data-text="OPERATOR PROFILE">OPERATOR PROFILE</h2>
+        <span class="sec-rule"></span>
+      </div>
+      <div class="about-grid">
+        <div class="about-copy reveal">
+          <p>I'm a final-year <span class="hl">Engineering Science</span> student majoring in <span class="cyan">Robotics</span>, with a double minor in <span class="hl">Engineering Business</span> and <span class="hl">Artificial Intelligence</span>. My foundation is hardware and control, but my trajectory points squarely at <span class="acid">AI-driven quantitative finance</span> — turning models into decisions that move capital.</p>
+          <p>My undergraduate thesis at the <span class="hl">FORM Lab</span> under Professor Roy Kwon fuses machine learning with convex optimization for statistical-arbitrage Markowitz portfolios — a pipeline that cleared survivorship bias on real CRSP/WRDS data and held its edge through live market regimes.</p>
+          <p>Before finance, I logged serious time in the field: autonomous drones and self-driving stacks on <span class="cyan">ROS2</span>, embedded systems on bare-metal STM32, and a co-op designing electrical systems for 100+ interiors. Different domains, same instinct — drop into the unknown, learn fast, ship something that works.</p>
+          <p>Off the grid: certified deep-water scuba diver (dove the Galápagos with sharks and sea lions), 10+ years on the flute, plus weightlifting, cooking, and a growing shelf of Gundam model kits.</p>
+        </div>
+        <div class="side-stack reveal">
+          <div class="mini-stats">
+            <div class="panel stat"><div class="num" data-count="0.661" data-dec="3">0.000</div><div class="lbl">Peak Thesis Sharpe</div></div>
+            <div class="panel stat"><div class="num acid" data-count="11225" data-prefix="$" data-sep="1">$0</div><div class="lbl">Skoll Award</div></div>
+          </div>
+          <div class="panel daemons">
+            <div class="daemon-head">Off-Duty // Background Processes</div>
+            <ul class="daemon-list">
+              <li><span class="d-dot"></span>scuba_diver.sys<span class="d-meta">GALÁPAGOS</span></li>
+              <li><span class="d-dot"></span>flute.daemon<span class="d-meta">10+ YRS</span></li>
+              <li><span class="d-dot"></span>gundam_build.exe<span class="d-meta">RUNNING</span></li>
+              <li><span class="d-dot"></span>golf + badminton<span class="d-meta">IDLE</span></li>
+              <li><span class="d-dot"></span>photography.cap<span class="d-meta">ACTIVE</span></li>
+              <li><span class="d-dot"></span>kitchen.sandbox<span class="d-meta">FOODIE</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOG / EXPERIENCE -->
+  <section class="block" id="log" aria-labelledby="log-t">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="sec-num">02</span>
+        <h2 class="sec-title glitch" id="log-t" data-text="SYSTEM LOG">SYSTEM LOG</h2>
+        <span class="sec-rule"></span>
+      </div>
+      <div class="timeline">
+
+        <div class="entry reveal">
+          <div class="when">2025 — 2026</div>
+          <div class="panel card">
+            <div class="role-co">
+              <div><h3>FORM Lab — Roy Kwon</h3><div class="sub">Undergraduate Thesis Researcher</div></div>
+              <span class="toggle">+</span>
+            </div>
+            <div class="body">
+              <p>ML-enhanced statistical-arbitrage on a Markowitz portfolio — figuring out where learning actually adds value in a quant pipeline.</p>
+              <ul>
+                <li>Benchmarked 6 models across pair selection and parameter estimation; <b>found ML pays off at estimation, not selection</b>.</li>
+                <li>Built an ElasticNet + RandomForest → daily QP pipeline over <b>12,668 CRSP equities</b>; hit <b>Sharpe 0.661</b> and <b>+49.4%</b> return.</li>
+                <li>Killed survivorship bias via CRSP/WRDS (19.4% survival vs. ~93% for free data), exposing a <b>73 pp backtest inflation</b>.</li>
+                <li>Surfaced regime dependence: <b>+18.5% Sharpe vs. equal-weight</b> in bull markets, drawdown capped at −14.1% in 2022.</li>
+              </ul>
+              <div class="tags"><span class="tag">Python</span><span class="tag">QP / Convex Opt</span><span class="tag">RandomForest</span><span class="tag">ElasticNet</span><span class="tag">CRSP / WRDS</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="entry reveal">
+          <div class="when">2024 — 2025</div>
+          <div class="panel card">
+            <div class="role-co">
+              <div><h3>Smith + Andersen</h3><div class="sub">Junior Electrical Designer</div></div>
+              <span class="toggle">+</span>
+            </div>
+            <div class="body">
+              <p>Dropped into building systems with zero prior background and made it my domain — coordinating architects, contractors, and budgets at consulting pace.</p>
+              <ul>
+                <li>Designed electrical and lighting systems for <b>100+ interiors</b>, from 500 sq ft retail to 60,000+ sq ft offices.</li>
+                <li>Produced <b>100+ AutoCAD / Revit drawing sets</b> at a one-week average delivery turnaround.</li>
+                <li>Ran pricing and material-quote reviews to keep designs cost-accurate and on-budget.</li>
+              </ul>
+              <div class="tags"><span class="tag">AutoCAD</span><span class="tag">Revit</span><span class="tag">Cost Review</span><span class="tag">Code Compliance</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="entry reveal">
+          <div class="when">2024 — 2025</div>
+          <div class="panel card">
+            <div class="role-co">
+              <div><h3>aUToronto — Self-Driving Team</h3><div class="sub">Systems · Drivers</div></div>
+              <span class="toggle">+</span>
+            </div>
+            <div class="body">
+              <p>Sensor and driver work on the university's autonomous-vehicle stack, the perception layer's plumbing.</p>
+              <ul>
+                <li>Automated camera-driver config in <b>C++ / ROS2</b>, cutting setup time 30% and steadying perception calibration.</li>
+                <li>Streamlined sensor integration with perception and controls for faster testing and higher uptime.</li>
+                <li>Annotated and validated <b>2,000+ training images</b> for lane and object detection.</li>
+              </ul>
+              <div class="tags"><span class="tag">C++</span><span class="tag">ROS2</span><span class="tag">Perception</span><span class="tag">Sensor Fusion</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="entry reveal">
+          <div class="when">2023</div>
+          <div class="panel card">
+            <div class="role-co">
+              <div><h3>Kevares Autonomous Services</h3><div class="sub">Jr. Mechatronics & Embedded Systems</div></div>
+              <span class="toggle">+</span>
+            </div>
+            <div class="body">
+              <p>First robotics internship — startup tempo, code on day one, real systems in the field.</p>
+              <ul>
+                <li>Built a <b>ROS + Streamlit dashboard</b> wiring live telemetry, diagnostics, and control into one interface.</li>
+                <li>Wrote a Python <b>stereo-vision backend (Open3D)</b> for automated defect detection, cutting analysis time 40%.</li>
+                <li>Deployed and tested embedded systems on autonomous platforms, tightening latency and reliability.</li>
+              </ul>
+              <div class="tags"><span class="tag">ROS</span><span class="tag">Python</span><span class="tag">Open3D</span><span class="tag">Streamlit</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILDS / PROJECTS -->
+  <section class="block" id="builds" aria-labelledby="builds-t">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="sec-num">03</span>
+        <h2 class="sec-title glitch" id="builds-t" data-text="DEPLOYED BUILDS">DEPLOYED BUILDS</h2>
+        <span class="sec-rule"></span>
+      </div>
+      <div class="proj-grid">
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_01</span><span class="pdate">2025</span></div>
+          <h3>Markowitz Portfolio Engine</h3>
+          <div class="stack">Python · MATLAB · pandas · NumPy</div>
+          <p>Solved the mean-variance optimization problem for an n-asset portfolio to trace the full efficient frontier, with data pipelines computing 10-year returns, covariances, and volatilities.</p>
+          <div class="metric"><span class="m"><b>Iterative QP</b>optimal weights</span><span class="m"><b>Long / Short</b>both constraints</span></div>
+        </div>
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_02</span><span class="pdate">2025</span></div>
+          <h3>Audio Diffusion Transformer</h3>
+          <div class="stack">Python · PyTorch · NumPy</div>
+          <p>A diffusion-transformer audio generator with test-time training, plus adaptive MLP blocks across 24 layers for real-time refinement and steadier generation.</p>
+          <div class="metric"><span class="m"><b>+140%</b>CLAP vs. baseline</span><span class="m"><b>18.5 hrs</b>audio pipeline</span></div>
+        </div>
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_03</span><span class="pdate">2025</span></div>
+          <h3>Autonomous Tracking Drone</h3>
+          <div class="stack">ROS2 · NVIDIA Jetson · YOLOv8 · MAVROS</div>
+          <p>A 7-node ROS2 system on Jetson with HSV / YOLOv8 vision and a 6-state flight FSM, including Archimedean-spiral re-acquisition on target loss via T265 visual-inertial odometry.</p>
+          <div class="metric"><span class="m"><b>5–10 ms</b>detection latency</span><span class="m"><b>20 Hz</b>control loop</span></div>
+        </div>
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_04</span><span class="pdate">2024</span></div>
+          <h3>STM32 Robotic Companion</h3>
+          <div class="stack">C · STM32 HAL · PWM · FSM</div>
+          <p>An interactive robotic system on STM32-DISCO blending a touchscreen UI, audio, sensors, LEDs, and servos, driven by an interrupt- and timer-based finite state machine.</p>
+          <div class="metric"><span class="m"><b>Real-time</b>I/O sync</span><span class="m"><b>HAL</b>bare-metal control</span></div>
+        </div>
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_05</span><span class="pdate">2023</span></div>
+          <h3>Equity Valuation Models</h3>
+          <div class="stack">FactSet · Excel · DCF · CAPM</div>
+          <p>DCF and CAPM valuations for Caterpillar and Deere, with IRR / NPV analysis on a $120M project across tax and discount-rate scenarios, and DuPont risk comparisons.</p>
+          <div class="metric"><span class="m"><b>$120M</b>project modeled</span><span class="m"><b>DuPont</b>leverage analysis</span></div>
+        </div>
+
+        <div class="panel proj reveal">
+          <div class="top"><span class="pid">BUILD_06</span><span class="pdate">2024</span></div>
+          <h3>This Site // v2</h3>
+          <div class="stack">Three.js · WebGL · GLSL · Vanilla JS</div>
+          <p>A hand-built WebGL experience — infinite neon grid, a glowing cyberware core, bloom post-processing, and a HUD interface. No frameworks, just shaders and intent.</p>
+          <div class="metric"><span class="m"><b>WebGL2</b>+ bloom pass</span><span class="m"><b>0</b>dependencies</span></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ARSENAL / SKILLS -->
+  <section class="block" id="arsenal" aria-labelledby="arsenal-t">
+    <div class="container">
+      <div class="sec-head reveal">
+        <span class="sec-num">04</span>
+        <h2 class="sec-title glitch" id="arsenal-t" data-text="ARSENAL">ARSENAL</h2>
+        <span class="sec-rule"></span>
+      </div>
+      <div class="arsenal">
+        <div class="panel kit reveal">
+          <h4>Languages</h4>
+          <div class="chips"><span class="chip">Python</span><span class="chip">C / C++</span><span class="chip">Java</span><span class="chip">SQL</span><span class="chip">MATLAB</span></div>
+        </div>
+        <div class="panel kit reveal">
+          <h4>ML / AI</h4>
+          <div class="chips"><span class="chip">PyTorch</span><span class="chip">scikit-learn</span><span class="chip">NumPy</span><span class="chip">pandas</span><span class="chip">Deep Learning</span><span class="chip">Diffusion Models</span></div>
+        </div>
+        <div class="panel kit reveal">
+          <h4>Quant / Finance</h4>
+          <div class="chips"><span class="chip">Portfolio Optimization</span><span class="chip">Convex Optimization</span><span class="chip">Risk Modeling</span><span class="chip">DCF / CAPM</span><span class="chip">Stat-Arb</span><span class="chip">FactSet</span></div>
+        </div>
+        <div class="panel kit reveal">
+          <h4>Robotics / Systems</h4>
+          <div class="chips"><span class="chip">ROS2</span><span class="chip">Embedded / STM32</span><span class="chip">Control Theory</span><span class="chip">State Estimation</span><span class="chip">Computer Vision</span><span class="chip">NVIDIA Jetson</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="block" id="contact" aria-labelledby="contact-t">
+    <div class="container">
+      <div class="panel contact-card reveal">
+        <span class="eyebrow">Establish Connection</span>
+        <h2 class="glitch" id="contact-t" data-text="LET'S BUILD">LET'S BUILD</h2>
+        <p>Open to quant, ML, and robotics roles starting 2026. If you're working on something at the intersection of intelligence and capital — let's talk.</p>
+        <div class="contact-links">
+          <a class="clink acid" href="mailto:kevinni0302@gmail.com" data-hot>
+            <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5z"/></svg>
+            Email
+          </a>
+          <a class="clink" href="https://www.linkedin.com/in/kevin-ni/" target="_blank" rel="noopener" data-hot>
+            <svg viewBox="0 0 24 24"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+            LinkedIn
+          </a>
+          <a class="clink" href="https://github.com/Kevin-Ni22" target="_blank" rel="noopener" data-hot>
+            <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.23c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.58A12 12 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+          </a>
+          <a class="clink mag" href="Kevin_Ni_Resume_Fintech.pdf" target="_blank" rel="noopener" data-hot>
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Résumé · Fintech
+          </a>
+          <a class="clink mag" href="Kevin_Ni_Resume_Robotics.pdf" target="_blank" rel="noopener" data-hot>
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Résumé · Robotics
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="container foot">
+        <span>© 2026 KEVIN NI <span class="acid">//</span> BUILT WITH WEBGL &amp; CAFFEINE</span>
+        <span>647·546·4818 <span class="acid">//</span> TORONTO, ON</span>
+      </div>
+    </footer>
+  </section>
+
+</div>
+
+<!-- import map for Three.js + addons -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* =========================================================
+   KEVIN NI // cyberpunk WebGL scene + HUD interactions
+   ========================================================= */
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch = matchMedia('(hover:none)').matches;
+const isSmall = matchMedia('(max-width:768px)').matches;
+
+/* ---------- boot sequence ---------- */
+(function boot(){
+  const boot = document.getElementById('boot');
+  const txt = document.getElementById('bootText');
+  const bar = document.getElementById('bootBar');
+  const lines = [
+    'booting netrunner_os v2.0.77 ...',
+    'mounting /dev/robotics ............ <b>ok</b>',
+    'loading neural.weights ............ <b>ok</b>',
+    'linking quant.engine ............. <b>ok</b>',
+    'decrypting operator: <b>KEVIN NI</b>',
+    'access granted <span class="ok">> welcome</span>'
+  ];
+  const finish = () => {
+    document.body.classList.remove('no-scroll');
+    boot.classList.add('done');
+    setTimeout(()=>boot.remove(), 700);
+    startReveals();
+  };
+  if (reduced){ txt.innerHTML = lines[lines.length-1]; bar.style.inset='0 0 0 0'; setTimeout(finish, 350); return; }
+  let i = 0;
+  bar.style.transition = 'inset 2.4s linear'; requestAnimationFrame(()=>{ bar.style.inset = '0 0 0 0'; });
+  const step = () => {
+    if (i >= lines.length){ setTimeout(finish, 280); return; }
+    txt.innerHTML = lines[i]; i++;
+    setTimeout(step, 360 + Math.random()*120);
+  };
+  step();
+})();
+
+/* ---------- barcode + role flicker ---------- */
+(function deco(){
+  const bc = document.getElementById('barcode');
+  if (bc){ let h=''; for(let i=0;i<22;i++){ h += `<i style="height:${8+Math.random()*10}px"></i>`; } bc.innerHTML = h; }
+  if (reduced) return;
+  const roles = ['ROBOTICS ENGINEER · ML · QUANT','AUTONOMOUS SYSTEMS · DEEP LEARNING','PORTFOLIO OPT · STAT-ARB · AI'];
+  const el = document.getElementById('roleLine'); let r=0;
+  setInterval(()=>{ r=(r+1)%roles.length; el.style.opacity='0'; setTimeout(()=>{ el.textContent=roles[r]; el.style.transition='opacity .4s'; el.style.opacity='1'; },220); }, 4200);
+})();
+
+/* ---------- scroll reveal + count-up ---------- */
+let revealStarted = false;
+function startReveals(){
+  if (revealStarted) return; revealStarted = true;
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); if(e.target.querySelector?.('[data-count]')||e.target.matches?.('[data-count]')) {} } });
+  },{threshold:.16, rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // count-up
+  const cio = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ countUp(e.target); cio.unobserve(e.target); } });
+  },{threshold:.6});
+  document.querySelectorAll('[data-count]').forEach(el=>cio.observe(el));
+}
+function countUp(el){
+  const target = parseFloat(el.dataset.count);
+  const dec = parseInt(el.dataset.dec||'0',10);
+  const suffix = el.dataset.suffix||''; const prefix = el.dataset.prefix||'';
+  const sep = el.dataset.sep==='1';
+  if (reduced){ el.textContent = prefix+fmt(target,dec,sep)+suffix; return; }
+  const dur = 1300; const t0 = performance.now();
+  function tick(now){
+    const p = Math.min(1,(now-t0)/dur); const e = 1-Math.pow(1-p,3);
+    el.textContent = prefix+fmt(target*e,dec,sep)+suffix;
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function fmt(n,dec,sep){ let s = dec>0 ? n.toFixed(dec) : Math.round(n).toString(); if(sep){ const parts=s.split('.'); parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,','); s=parts.join('.'); } return s; }
+
+/* ---------- nav: scrollspy + burger ---------- */
+(function nav(){
+  const links = [...document.querySelectorAll('.nav-links a')];
+  const map = links.map(a=>({a, sec:document.querySelector(a.getAttribute('href'))})).filter(x=>x.sec);
+  const onScroll = ()=>{
+    const y = scrollY + innerHeight*0.32; let cur = map[0];
+    for(const m of map){ if(m.sec.offsetTop <= y) cur = m; }
+    links.forEach(a=>a.classList.remove('active')); cur?.a.classList.add('active');
+  };
+  addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  const burger = document.getElementById('burger'); const menu = document.getElementById('navLinks');
+  burger.addEventListener('click', ()=>{ const open = menu.classList.toggle('open'); burger.setAttribute('aria-expanded', open); });
+  menu.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{ menu.classList.remove('open'); burger.setAttribute('aria-expanded','false'); }));
+})();
+
+/* ---------- experience cards expand ---------- */
+document.querySelectorAll('.entry .card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const open = card.classList.contains('open');
+    document.querySelectorAll('.entry .card.open').forEach(c=>{ if(c!==card){ c.classList.remove('open'); c.querySelector('.body').style.maxHeight='0'; } });
+    if(open){ card.classList.remove('open'); card.querySelector('.body').style.maxHeight='0'; }
+    else{ card.classList.add('open'); const b=card.querySelector('.body'); b.style.maxHeight=b.scrollHeight+'px'; }
+  });
+});
+
+/* ---------- reticle cursor ---------- */
+(function reticle(){
+  if (isTouch || reduced) return;
+  const r = document.getElementById('reticle'); let x=innerWidth/2,y=innerHeight/2,tx=x,ty=y;
+  addEventListener('pointermove', e=>{ tx=e.clientX; ty=e.clientY; }, {passive:true});
+  document.querySelectorAll('a, button, [data-hot], .entry .card, .chip').forEach(el=>{
+    el.addEventListener('pointerenter', ()=>r.classList.add('hot'));
+    el.addEventListener('pointerleave', ()=>r.classList.remove('hot'));
+  });
+  (function loop(){ x+=(tx-x)*.22; y+=(ty-y)*.22; r.style.transform=`translate(${x}px,${y}px)`; requestAnimationFrame(loop); })();
+})();
+
+/* =========================================================
+   THREE.JS SCENE
+   ========================================================= */
+import * as THREE from 'three';
+
+let renderer, scene, camera, composer, coreGroup, grid, points, gridMat;
+let nextGlitch = 3.5, glitchEnd = 0, glitchActive = false;
+const clock = new THREE.Clock();
+let prevT = 0;
+const pointer = { x:0, y:0, tx:0, ty:0 };
+const CY = new THREE.Color(0x00f0ff), MG = new THREE.Color(0xff2e97), YL = new THREE.Color(0xfcee0a);
+
+initThree();
+
+async function initThree(){
+  const canvas = document.getElementById('bg');
+  try{
+    renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'high-performance' });
+  }catch(err){ document.body.classList.add('no-webgl'); return; }
+  if (!renderer.getContext()){ document.body.classList.add('no-webgl'); return; }
+
+  renderer.setPixelRatio(Math.min(devicePixelRatio, isSmall ? 1.5 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x05060a, 0.055);
+
+  camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 220);
+  camera.position.set(0, 2.4, 9.5);
+  camera.lookAt(0, 2.2, 0);
+
+  /* ---- neon grid floor (shader) ---- */
+  gridMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{ uTime:{value:0}, uA:{value:CY}, uB:{value:MG} },
+    vertexShader:`
+      varying vec3 vW;
+      void main(){ vec4 wp = modelMatrix*vec4(position,1.0); vW = wp.xyz; gl_Position = projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`
+      precision highp float;
+      uniform float uTime; uniform vec3 uA; uniform vec3 uB; varying vec3 vW;
+      float gl(vec2 p){ vec2 g = abs(fract(p-0.5)-0.5)/fwidth(p); float l = min(g.x,g.y); return 1.0-min(l,1.0); }
+      void main(){
+        vec2 c = vec2(vW.x, vW.z + uTime*2.2);
+        float g1 = gl(c);                 // 1-unit grid
+        float g2 = gl(c*0.2)*0.7;         // 5-unit grid (brighter)
+        float g = max(g1*0.55, g2);
+        float dist = length(vW.xz);
+        float fade = 1.0 - smoothstep(6.0, 58.0, dist);
+        vec3 col = mix(uA, uB, smoothstep(4.0, 40.0, dist));
+        gl_FragColor = vec4(col, g*fade*0.85);
+      }`
+  });
+  grid = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), gridMat);
+  grid.rotation.x = -Math.PI/2; grid.position.y = -0.02;
+  scene.add(grid);
+
+  /* ---- robotic gyro-gimbal core ---- */
+  coreGroup = new THREE.Group(); coreGroup.position.set(1.8, 2.7, 0); scene.add(coreGroup);
+
+  // reactor nucleus
+  const innerMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.74, 1),
+    new THREE.MeshBasicMaterial({ color:0x0a0f1a }));
+  coreGroup.add(innerMesh);
+  const wire = new THREE.LineSegments(
+    new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(0.78, 1)),
+    new THREE.LineBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0.95 }));
+  coreGroup.add(wire);
+  // bright core spark
+  const spark = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, 0),
+    new THREE.MeshBasicMaterial({ color:0xbfffff }));
+  coreGroup.add(spark);
+
+  // RGB-split ghosts of the nucleus (hidden until a glitch burst)
+  const ghostGeo = new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(0.78, 1));
+  const ghostC = new THREE.LineSegments(ghostGeo, new THREE.LineBasicMaterial({ color:0x00f0ff, transparent:true, opacity:0 }));
+  const ghostM = new THREE.LineSegments(ghostGeo, new THREE.LineBasicMaterial({ color:0xff2e97, transparent:true, opacity:0 }));
+  ghostC.visible = ghostM.visible = false;
+  coreGroup.add(ghostC); coreGroup.add(ghostM);
+
+  // nested gimbal rings (gyroscope / IMU) — each tumbles on its own axis
+  function gimbalRing(radius, color){
+    const g = new THREE.Group();
+    const tube = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.035, 12, 160),
+      new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.92 }));
+    g.add(tube);
+    // spin axle through the poles
+    const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, radius*2, 8),
+      new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.6 }));
+    axle.rotation.z = Math.PI/2; g.add(axle);
+    for (const s of [1,-1]){            // bearing joints at the poles
+      const joint = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.18,0.18),
+        new THREE.MeshBasicMaterial({ color }));
+      joint.position.x = radius*s; g.add(joint);
+    }
+    coreGroup.add(g); return g;
+  }
+  const ringO = gimbalRing(2.55, 0x00f0ff);   // outer  · cyan
+  const ringM = gimbalRing(2.05, 0xff2e97);   // middle · magenta
+  const ringI = gimbalRing(1.55, 0xfcee0a);   // inner  · yellow
+  ringM.rotation.set(Math.PI/2, 0, 0);
+  ringI.rotation.set(0, Math.PI/2, Math.PI/6);
+
+  // faint dodecahedron shell for depth
+  const cage = new THREE.LineSegments(
+    new THREE.WireframeGeometry(new THREE.DodecahedronGeometry(2.95, 0)),
+    new THREE.LineBasicMaterial({ color:0x1c3f4d, transparent:true, opacity:0.28 }));
+  coreGroup.add(cage);
+
+  /* orbiting sensor nodes */
+  const satSpecs = [
+    { color:0x00f0ff, r:3.5, speed:0.55, tilt:[0.35, 0.0],  size:0.13 },
+    { color:0xff2e97, r:4.05, speed:-0.4, tilt:[1.15, 0.4], size:0.11 },
+    { color:0xfcee0a, r:3.75, speed:0.32, tilt:[-0.5, 0.9], size:0.10 },
+  ];
+  const sats = satSpecs.map(s=>{
+    const orbit = new THREE.Group(); orbit.rotation.set(s.tilt[0], 0, s.tilt[1]); coreGroup.add(orbit);
+    const arm = new THREE.Group(); orbit.add(arm);
+    const node = new THREE.Mesh(new THREE.OctahedronGeometry(s.size, 0),
+      new THREE.MeshBasicMaterial({ color:s.color }));
+    node.position.x = s.r; arm.add(node);
+    const halo = new THREE.LineSegments(
+      new THREE.WireframeGeometry(new THREE.OctahedronGeometry(s.size*1.9, 0)),
+      new THREE.LineBasicMaterial({ color:s.color, transparent:true, opacity:0.5 }));
+    node.add(halo);
+    arm.rotation.y = Math.random()*Math.PI*2;
+    return { arm, node, speed:s.speed };
+  });
+
+  coreGroup.userData = { wire, inner:innerMesh, spark, cage, sats, rings:[ringO, ringM, ringI], ghosts:[ghostC, ghostM] };
+
+  /* ---- data particles ---- */
+  const N = isSmall ? 900 : 2600;
+  const pos = new Float32Array(N*3); const col = new Float32Array(N*3);
+  for (let i=0;i<N;i++){
+    const r = 6 + Math.random()*34, a = Math.random()*Math.PI*2;
+    pos[i*3] = Math.cos(a)*r * (0.5+Math.random()*0.5);
+    pos[i*3+1] = Math.random()*22 - 1;
+    pos[i*3+2] = (Math.random()-0.5)*70 - 10;
+    const c = Math.random(); const cc = c<0.55?CY : c<0.85?MG : YL;
+    col[i*3]=cc.r; col[i*3+1]=cc.g; col[i*3+2]=cc.b;
+  }
+  const pg = new THREE.BufferGeometry();
+  pg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  pg.setAttribute('color', new THREE.BufferAttribute(col,3));
+  points = new THREE.Points(pg, new THREE.PointsMaterial({ size:0.06, vertexColors:true, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false }));
+  scene.add(points);
+
+  /* ---- bloom postprocessing ---- */
+  try{
+    const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js');
+    const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js');
+    const { UnrealBloomPass } = await import('three/addons/postprocessing/UnrealBloomPass.js');
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), isSmall?0.9:1.25, 0.7, 0.0);
+    composer.addPass(bloom);
+    composer.setSize(innerWidth, innerHeight);
+  }catch(err){ composer = null; }
+
+  /* ---- interaction ---- */
+  if (!isTouch){
+    addEventListener('pointermove', e=>{ pointer.tx = (e.clientX/innerWidth)*2-1; pointer.ty = (e.clientY/innerHeight)*2-1; }, {passive:true});
+  }
+  addEventListener('resize', onResize);
+
+  renderer.setAnimationLoop(render);
+}
+
+function onResize(){
+  if(!renderer) return;
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer?.setSize(innerWidth, innerHeight);
+}
+
+function render(){
+  const t = clock.getElapsedTime();
+  if (document.hidden){ prevT = t; return; }
+  const dt = Math.min(t - prevT, 0.05); prevT = t;
+
+  if (gridMat) gridMat.uniforms.uTime.value = t;
+
+  if (coreGroup){
+    const ud = coreGroup.userData;
+
+    // reactor nucleus + spark
+    ud.wire.rotation.y += dt*0.4;  ud.wire.rotation.x += dt*0.15;
+    ud.inner.rotation.y += dt*0.4; ud.inner.rotation.x += dt*0.15;
+    ud.spark.rotation.y -= dt*0.9;
+    ud.cage.rotation.y -= dt*0.06; ud.cage.rotation.z += dt*0.03;
+
+    // gyroscope: each gimbal ring tumbles on its own axes
+    const [rO, rM, rI] = ud.rings;
+    rO.rotation.z += dt*0.5;  rO.rotation.y += dt*0.12;
+    rM.rotation.x += dt*0.42; rM.rotation.z += dt*0.18;
+    rI.rotation.y += dt*0.66; rI.rotation.x += dt*0.22;
+
+    // breathing pulse + spark flicker
+    const breathe = 1 + Math.sin(t*1.6)*0.05;
+    ud.wire.scale.setScalar(breathe);
+    ud.inner.scale.setScalar(breathe);
+    ud.wire.material.opacity = 0.75 + Math.sin(t*2.0)*0.2;
+    ud.spark.scale.setScalar(1 + Math.sin(t*7.0)*0.18);
+
+    // orbiting sensor nodes
+    if (ud.sats) for (const s of ud.sats){
+      s.arm.rotation.y += dt * s.speed * (reduced ? 0.4 : 1);
+      s.node.rotation.x += dt*1.6; s.node.rotation.y += dt*1.2;
+    }
+
+    // float
+    coreGroup.position.y = 2.7 + Math.sin(t*0.8)*0.12;
+    coreGroup.position.x = 1.8 + Math.sin(t*0.5)*0.1;
+
+    // lean toward the cursor for a touch of life
+    const lean = reduced ? 0.05 : 0.22;
+    ud._ry = (ud._ry||0) + ((pointer.x*lean) - (ud._ry||0))*0.05;
+    ud._rx = (ud._rx||0) + ((pointer.y*lean) - (ud._rx||0))*0.05;
+    coreGroup.rotation.y = ud._ry;
+    coreGroup.rotation.x = ud._rx;
+  }
+
+  if (points && !reduced){ points.rotation.y = t*0.02; }
+
+  // camera parallax
+  pointer.x += (pointer.tx - pointer.x)*0.04;
+  pointer.y += (pointer.ty - pointer.y)*0.04;
+  const sway = reduced ? 0 : 1;
+  camera.position.x = pointer.x*1.4*sway + Math.sin(t*0.2)*0.2*sway;
+  camera.position.y = 2.4 - pointer.y*0.7*sway;
+  camera.lookAt(0, 2.3, 0);
+
+  // object-only glitch: RGB-split ghosts + flicker on the core, occasional short burst
+  if (coreGroup && !reduced){
+    const ud = coreGroup.userData;
+    if (!glitchActive && t > nextGlitch){
+      glitchActive = true;
+      glitchEnd = t + 0.12 + Math.random()*0.16;     // ~0.12-0.28s burst
+      nextGlitch = t + 5 + Math.random()*6;           // next in ~5-11s
+    } else if (glitchActive && t > glitchEnd){
+      glitchActive = false;
+    }
+    const gh = ud.ghosts;
+    if (gh){
+      if (glitchActive){
+        const off = 0.09 + Math.random()*0.12;
+        gh[0].visible = gh[1].visible = true;
+        gh.forEach((g,i)=>{
+          g.material.opacity = 0.55 + Math.random()*0.3;
+          g.position.set((i===0?1:-1)*off, (Math.random()-0.5)*0.08, 0);
+          g.rotation.copy(ud.wire.rotation);
+          g.scale.copy(ud.wire.scale);
+        });
+        ud.wire.material.opacity = 0.2 + Math.random()*0.6;                  // nucleus flicker
+        for (const r of ud.rings){ r.children[0].material.opacity = 0.3 + Math.random()*0.65; }
+        coreGroup.position.x += (Math.random()-0.5)*0.14;                     // digital jitter
+        coreGroup.position.y += (Math.random()-0.5)*0.10;
+        coreGroup.rotation.z = (Math.random()-0.5)*0.08;                      // shake
+      } else if (gh[0].visible){
+        gh[0].visible = gh[1].visible = false;
+        for (const r of ud.rings){ r.children[0].material.opacity = 0.92; }   // restore rings
+        coreGroup.rotation.z = 0;
+      }
+    }
+  }
+
+  if (composer) composer.render(); else renderer.render(scene, camera);
+}
+</script>
+</body>
 </html>
